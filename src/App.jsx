@@ -5,7 +5,7 @@ import { AppRouter } from './components/router/AppRouter';
 
 import './App.css'
 import { RoomContext } from './context/RoomContext';
-import { client } from './database/contentFul';
+import contentful from './database/contentFul';
 
 export const App = () => {
 
@@ -29,7 +29,7 @@ export const App = () => {
   const getData = async () => {
 
     try {
-      let response = await client.getEntries({
+      let response = await contentful.getEntries({
         content_type: 'beachResort',
         order: 'fields.name'
       });
