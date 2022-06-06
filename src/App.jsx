@@ -1,52 +1,64 @@
 import {useEffect, useState} from 'react';
 import { AppRouter } from './components/router/AppRouter';
-import items from './database/data';
+// import items from './database/data';
+
 
 import './App.css'
 import { RoomContext } from './context/RoomContext';
-
-const initialState = {
-  rooms: [],
-  sortedRooms: [],
-  featuredRooms: [],
-  loading: true,
-  type: 'all',
-  capacity: 1,
-  price: 0,
-  minPrice: 0,
-  maxPrice: 0,
-  minSize: 0,
-  maxSize: 0,
-  breakfast: false,
-  pets: false
-};
+import { client } from './database/contentFul';
 
 export const App = () => {
 
-  const [roomState, setRoomState] = useState(initialState);
+  const [roomState, setRoomState] = useState({
+    rooms: [],
+    sortedRooms: [],
+    featuredRooms: [],
+    loading: true,
+    type: 'all',
+    capacity: 1,
+    price: 0,
+    minPrice: 0,
+    maxPrice: 0,
+    minSize: 0,
+    maxSize: 0,
+    breakfast: false,
+    pets: false
+  });
 
-  useEffect(() => {
-    let rooms = formatData(items); 
-    let featuredRooms = rooms.filter(room => room.featured === true);
-    let maxPrice = Math.max(...rooms.map(item => item.price));
-    let maxSize = Math.max(...rooms.map(item => item.size));
 
-    setRoomState(prevState => ({
-      ...prevState,
+  const getData = async () => {
+
+    try {
+      let response = await client.getEntries({
+        content_type: 'beachResort',
+        order: 'fields.name'
+      });
+
+      let rooms = formatData(response.items); 
+      let featuredRooms = rooms.filter(room => room.featured === true);
+      let maxPrice = Math.max(...rooms.map(item => item.price));
+      let maxSize = Math.max(...rooms.map(item => item.size));
+
+    setRoomState({
+      ...roomState,
       rooms,
       featuredRooms,
       sortedRooms: rooms,
       loading: false,
       price: maxPrice,
       maxPrice,
-      maxSize,
-      formatData,
-      handleChange,
-      getRoom
-    }));
-
+      maxSize
+    })
+      
+    } catch (error) {
+      console.log(error);
+    }
+    }
+  
+  useEffect(() => {
+    getData();
   }, []);
-
+  
   const formatData = (items) =>{
     let tempItems = items.map(item => {
       let id = item.sys.id;
@@ -64,57 +76,72 @@ export const App = () => {
     return room;
   };
 
-  const handleChange = event => {
-    const target = event.target;
-    const name = event.target.name;
-    const value = target.type === 'checkbox' ? target.checked : target.value;
+  const handleChange = (event) => {
 
-    setRoomState(prevState => ({
-      ...prevState,
-      [name]: value
-    })), filterRooms();
-  };
+    let {
+      rooms,
+      type,
+      capacity,
+      price,
+      minSize,
+      maxSize,
+      breakfast,
+      pets
+    } = roomState;
 
-  const filterRooms = () => {
-    let { rooms, type, capacity, price, minSize, maxSize, breakfast, pets } = roomState;
+    capacity = parseInt(capacity);
 
+    let target = event.target;
+    let value = target.type === "checkbox" ? target.checked : target.value;
+    let name = event.target.name;
+    
+    //all the roms
     let tempRooms = [...rooms];
 
     //filter by type
-    if(type !== 'all'){
-      tempRooms = tempRooms.filter(room => room.type === type);
+    if( name === 'type' && value !== "all"){
+      tempRooms = tempRooms.filter(room => room.type === value);
+    }
+    
+    //filter by capacity
+    if(name === 'capacity' && value !== 1){
+     
+      tempRooms = tempRooms.filter(room => room.capacity >= value);
     }
 
-    // //filter by capacity
-    // if(capacity !== 1){
-    //   tempRooms = tempRooms.filter(room => room.capacity >= capacity);
-    // }
+    //filter by price
+    if(name === 'price'){
+      price = parseInt(price);
+      tempRooms = tempRooms.filter(room => room.price <= value);
+    }
 
-    // //filter by price
-    // tempRooms = tempRooms.filter(room => room.price <= price);
+    //filter by size
+    if(name === 'minSize' && value !== 0 || name === 'maxSize' && value !== 0){
+      tempRooms = tempRooms.filter(room => room.size >= value);
+    }
 
-    // //filter by size
-    // tempRooms = tempRooms.filter(room => room.size >= minSize && room.size <= maxSize);
+    //filter by breakfast
+    if(name === 'breakfast' && value === true){
+      tempRooms = tempRooms.filter(room => room.breakfast === value);
+    }
 
-    // //filter by breakfast
-    // if(breakfast){
-    //   tempRooms = tempRooms.filter(room => room.breakfast === true);
-    // }
-
-    // //filter by pets
-    // if(pets){
-    //   tempRooms = tempRooms.filter(room => room.pets === true);
-    // }
-
-    //change state
-    setRoomState(prevState => ({
-      ...prevState,
-      sortedRooms: tempRooms
-    }));
-  };
+    //filter by pets
+    if(name === 'pets' && value === true){
+      tempRooms = tempRooms.filter(room => room.pets === value);
+    }
+    
+    setRoomState(
+       {
+        ...roomState,
+        [name]: value,
+        sortedRooms: tempRooms
+      }
+      );
   
+  };
+
   return (
-    <RoomContext.Provider value={roomState}>
+    <RoomContext.Provider value={{roomState, setRoomState, getRoom, handleChange}}>
       <AppRouter />
     </RoomContext.Provider>
   )

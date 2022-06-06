@@ -3,10 +3,8 @@ import {Link} from 'react-router-dom';
 import defaultImg from '../../../public/images/room-2.jpeg';
 
 export const RoomCard = ({room}) => {
-
     
     const {name, slug, images, price} = room;
-
 
   return (
     
@@ -24,7 +22,6 @@ export const RoomCard = ({room}) => {
             </Link>
         </div>
         <p className="room-info">{name}</p>
-
     </article>
   )
 };

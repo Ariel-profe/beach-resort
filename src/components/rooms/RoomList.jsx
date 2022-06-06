@@ -3,6 +3,7 @@ import {RoomCard} from './'
 
 export const RoomList = ({rooms}) => {
 
+
   if(rooms.length === 0) {
     return (
     <div className="empty-search">

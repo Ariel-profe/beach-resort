@@ -7,8 +7,7 @@ import { RoomCard } from "./";
 export const FeaturedRooms = () => {
 
   const {roomState} = useContext(RoomContext);
-
-  const {featuredRooms, loading } = roomState;
+  const {featuredRooms, loading} = roomState;
 
   return (
     <section className="featured-rooms">
